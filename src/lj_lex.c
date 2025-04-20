@@ -348,6 +348,14 @@ static LexToken lex_scan(LexState *ls, TValue *tv)
 	continue;
       }
       }
+    case '/':
+      lex_next(ls);
+      if (ls->c != '/') return '/';
+      lex_next(ls);
+      /* Short comment "//.*\n". */
+      while (!lex_iseol(ls) && ls->c != LEX_EOF)
+        lex_next(ls);
+      continue;
     case '=':
       lex_next(ls);
       if (ls->c != '=') return '='; else { lex_next(ls); return TK_eq; }
