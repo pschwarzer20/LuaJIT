@@ -1976,6 +1976,24 @@ static void expr_primary(LexState *ls, ExpDesc *v)
       expr_tonextreg(fs, v);
       if (ls->fr2) bcreg_reserve(fs, 1);
       parse_args(ls, v);
+    } else if (ls->tok == TK_incr || ls->tok == TK_decr) {
+      LexToken optok = ls->tok;
+      ExpDesc lhs = *v;
+  
+      lj_assertFS(lhs.k == VLOCAL || lhs.k == VUPVAL || lhs.k == VGLOBAL, "Invalid assignment target");
+  
+      lj_lex_next(ls);
+  
+      ExpDesc rhs;
+      expr(ls, &rhs);
+  
+      BinOpr op = (optok == TK_incr) ? OPR_ADD : OPR_SUB;
+      expr_toanyreg(fs, &lhs);
+      expr_toanyreg(fs, &rhs);
+      bcemit_binop(fs, op, &lhs, &rhs);
+      bcemit_store(fs, &lhs, &lhs);
+  
+      *v = lhs;
     } else {
       break;
     }

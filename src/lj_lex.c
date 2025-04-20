@@ -321,31 +321,32 @@ static LexToken lex_scan(LexState *ls, TValue *tv)
       continue;
     case '-':
       lex_next(ls);
+      if (ls->c == '=') { lex_next(ls); return TK_decr; }  // adds -=
       if (ls->c != '-') return '-';
       lex_next(ls);
       if (ls->c == '[') {  /* Long comment "--[=*[...]=*]". */
-	int sep = lex_skipeq(ls);
-	lj_buf_reset(&ls->sb);  /* `lex_skipeq' may dirty the buffer */
-	if (sep >= 0) {
-	  lex_longstring(ls, NULL, sep);
-	  lj_buf_reset(&ls->sb);
-	  continue;
-	}
+        int sep = lex_skipeq(ls);
+        lj_buf_reset(&ls->sb);  /* `lex_skipeq' may dirty the buffer */
+        if (sep >= 0) {
+          lex_longstring(ls, NULL, sep);
+          lj_buf_reset(&ls->sb);
+          continue;
+        }
       }
       /* Short comment "--.*\n". */
       while (!lex_iseol(ls) && ls->c != LEX_EOF)
-	lex_next(ls);
-      continue;
-    case '[': {
-      int sep = lex_skipeq(ls);
-      if (sep >= 0) {
-	lex_longstring(ls, tv, sep);
-	return TK_string;
-      } else if (sep == -1) {
-	return '[';
-      } else {
-	lj_lex_error(ls, TK_string, LJ_ERR_XLDELIM);
-	continue;
+        lex_next(ls);
+            continue;
+          case '[': {
+            int sep = lex_skipeq(ls);
+            if (sep >= 0) {
+        lex_longstring(ls, tv, sep);
+        return TK_string;
+            } else if (sep == -1) {
+        return '[';
+            } else {
+        lj_lex_error(ls, TK_string, LJ_ERR_XLDELIM);
+        continue;
       }
       }
     case '/':
@@ -356,6 +357,10 @@ static LexToken lex_scan(LexState *ls, TValue *tv)
       while (!lex_iseol(ls) && ls->c != LEX_EOF)
         lex_next(ls);
       continue;
+    case '+':
+      lex_next(ls);
+      if (ls->c == '=') { lex_next(ls); return TK_incr; }  // adds +=
+      return '+';
     case '=':
       lex_next(ls);
       if (ls->c != '=') return '='; else { lex_next(ls); return TK_eq; }
